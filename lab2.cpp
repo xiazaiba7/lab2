@@ -9,12 +9,33 @@ int length=0;
 int num;
 FILE *in,*out;
 string letter[1000];
+int shuzi[200];//用来储存数字 
+char op[200];
+int top1=-1,top2=-1;
+int operate(char c)
+{
+	if(c=='+')
+	shuzi[top1-1]=shuzi[top1]+shuzi[top1-1];
+	if(c=='-')
+	shuzi[top1-1]=shuzi[top1-1]-shuzi[top1];
+	if(c=='*')
+	shuzi[top1-1]=shuzi[top1-1]*shuzi[top1];
+	if(c=='/')
+	shuzi[top1-1]=shuzi[top1-1]/shuzi[top1];
+	if(c=='%')
+	shuzi[top1-1]=shuzi[top1-1]%shuzi[top1];
+	top1--;
+	return shuzi[top1-1]; 
+}
 int q[100];
 int top=0;
 int result= -1;
-int op=1;
+int MulExp();
 int PrimaryExp();
+int AddExp();
 int UnaryExp();
+int inputstack[100];
+int opstack[100];
 int symbol(string s)
 {
 	if(s=="(")
@@ -140,15 +161,136 @@ int Number(string s,int n)
  num=j;
  return -1;
 }
-int PrimaryExp()
+int Exp()
 {
-	if(letter[num]=="(")
+	while(letter[num]=="block")
 	{
 		num++;
-		if(UnaryExp()>0)
+	}
+	if(AddExp()>0)
+	{
+		return 1;
+	}
+	else
+	{
+		return 0;
+	}
+ } 
+int AddExp()
+{
+	while(letter[num]=="block")
+	{
+		num++;
+	}
+	if(MulExp()>0)
+	{
+		while(letter[num]=="block")
 		{
+			num++;
+		}
+		while(letter[num]=="+"||letter[num]=="-")
+		{
+			while(op[top2]!='('&&top2!=-1)
+			{
+				operate(op[top2]);
+				top2--;
+			}
+			if(letter[num]=="+") 
+				op[++top2]='+';
+			else if(letter[num]=="-")
+				op[++top2]='-';
+			num++;
+			while(letter[num]=="block")
+			{
+				num++;
+			}
+			if(MulExp()==0)
+				return 0;
+		}
+		return 1;
+	}
+	else
+		return 0;
+}
+int MulExp()
+{
+	while(letter[num]=="block")
+	{
+		num++;
+	}
+	if(UnaryExp()>0)
+	{
+		while(letter[num]=="block")
+		{
+			num++;
+		}
+		while(letter[num]=="*"||letter[num]=="/"||letter[num]=="%")
+		{
+			if(op[top2]=='+'||op[top2]=='-'||op[top2]=='('||top2==-1)
+			{
+				if(letter[num]=="*")
+					op[++top2]='*';
+				else if(letter[num]=="/")
+					op[++top2]='/';
+				else if(letter[num]=="%")
+					op[++top2]='%';				
+			}
+			else if(op[top2]=='*'||op[top2]=='%'||op[top2]=='/')
+			{
+				while(op[top2]=='*'||op[top2]=='%'||op[top2]=='/')
+				{
+					operate(op[top2]);
+					top2--;
+				}
+				if(letter[num]=="*")
+					op[++top2]='*';
+				else if(letter[num]=="/")
+					op[++top2]='/';
+				else if(letter[num]=="%")
+					op[++top2]='%';
+			}
+			num++;
+			while(letter[num]=="block")
+			{
+				num++;
+			}
+			if(UnaryExp()==0)
+				return 0;
+		}
+		return 1;
+	}
+	else
+		return 0;
+ } 
+int PrimaryExp(int opt)
+{
+	while(letter[num]=="block")
+	{
+		num++;
+	}
+	if(letter[num]=="(")
+	{
+		op[++top2]='(';
+		num++;
+		while(letter[num]=="block")
+		{
+			num++;
+		}
+		if(Exp()>0)
+		{
+			while(letter[num]=="block")
+			{
+				num++;
+			}
 			if(letter[num]==")")
 			{
+				while(op[top2]!='(')
+				{
+					operate(op[top2]);
+					top2--;
+				}
+				shuzi[top1]=shuzi[top1]*opt;
+				top2--;
 				num++;
 				return 1;
 			}
@@ -168,9 +310,14 @@ int PrimaryExp()
 		int j=num;
 		string s=letter[j];
 		result=Number(s,j);
+		shuzi[++top1]=opt*result;
 		if(result!=-1)
 		{
 			return 2;
+		}
+		else
+		{
+			return 0;
 		}
 	}
 	else
@@ -184,25 +331,23 @@ int UnaryExp()
 	{
 		num++;
 	}
-	if(letter[num]=="+"||letter[num]=="-")
+	int opt=1;
+	while(letter[num]=="+"||letter[num]=="-")
 	{
 		if(letter[num]=="-")
 		{
-			op = -op;
+			opt = -opt;
 		}
 		num++;
-		if(UnaryExp()>0)
+		while(letter[num]=="block")
 		{
-			return 2;
+			num++;
 		}
 	}
-	else
-	{
-		if(PrimaryExp()>0)
+	if(PrimaryExp(opt)>0)
 		return 1;
-		else
+	else
 		return 0;
-	}
 }
 int TakeWord()
 {
@@ -225,9 +370,14 @@ int TakeWord()
 			else if(x==6)
 			{
 				q[++top]=6;//return
-				if(UnaryExp()>0)
+				if(Exp()>0)
 				{
 					q[++top] = 7;
+					while(top2!=-1)
+					{
+						operate(op[top2]);
+						top2--;
+					}
 				}
 				else
 				{
@@ -386,7 +536,7 @@ int main(int argc,char **argv){
 		}
 		else if(q[i]==7)
 		{
-			fprintf(out,"i32 %d\n",result*op);
+			fprintf(out,"i32 %d\n",shuzi[0]);
 		}
 		else if(q[i]==9)
 		{
