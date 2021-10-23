@@ -286,8 +286,8 @@ int main(int argc,char **argv){
 	char w;
  	int i,j;
 
-	in = fopen("s.txt","r");
-	out = fopen("out.txt","w");
+	in = fopen(argv[1],"r");
+	out = fopen(argv[2],"w");
  	int flag=0;
 	char line[105];
 	while(fgets(line,100,in)!=NULL)
