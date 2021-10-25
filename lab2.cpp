@@ -91,7 +91,7 @@ int symbol(string s)
  }
  bool ishexdigit(string s)
  {
- 	if(s>="0"&&s<="9"||s>="a"&&s<="f"||s>="A"&&s<="F")
+ 	if((s>="0"&&s<="9"||s>="a"&&s<="f"||s>="A"&&s<="F")&&s!="block")
  		return true;
  	else
  		return false;
@@ -102,7 +102,7 @@ int Number(string s,int n)
 	int j=n+1;
 	int flag=1;
 	int ret;
-	if(s=="0"&&letter[j]=="x"||s=="0"&&letter[j]=="X")//十六进制 
+	if((s=="0"&&letter[j]=="x"||s=="0"&&letter[j]=="X")&&letter[j]!="block")//十六进制 
 	{
 		s=(s+letter[j]).c_str();
  		j++;
@@ -226,6 +226,7 @@ int MulExp()
 		}
 		while(letter[num]=="*"||letter[num]=="/"||letter[num]=="%")
 		{
+			
 			if(op[top2]=='+'||op[top2]=='-'||op[top2]=='('||top2==-1)
 			{
 				if(letter[num]=="*")
@@ -256,6 +257,10 @@ int MulExp()
 			}
 			if(UnaryExp()==0)
 				return 0;
+			while(letter[num]=="block")
+			{
+				num++;
+			}
 		}
 		return 1;
 	}
@@ -436,8 +441,8 @@ int main(int argc,char **argv){
 	char w;
  	int i,j;
 
-	in = fopen(argv[1],"r");
-	out = fopen(argv[2],"w");
+	in = fopen("s.txt","r");
+	out = fopen("out.txt","w");
  	int flag=0;
 	char line[105];
 	while(fgets(line,100,in)!=NULL)
