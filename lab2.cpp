@@ -39,15 +39,34 @@ int opstack[100];
 int symbol(string s)
 {
 	if(s=="(")
+	{
+		fprintf(out,"(");
+		num++;
 		return 3;
+	}
 	else if(s==")")
+	{	
+		fprintf(out,")");
+		num++;
 		return 4;
+	}	
 	else if(s=="{")
+	{
+		fprintf(out,"{\n");
+		num++;
 		return 5;
+	}
 	else if(s=="}")
+	{
+		fprintf(out,"}");
+		num++;
 		return 9;
+	}
 	else if(s==";")
+	{
+		num++;
 		return 8;
+	}
 	else
 		return 0;
 } 
@@ -68,11 +87,20 @@ int symbol(string s)
   	}
   	num=j;
  	if(s=="int")
+ 	{
+ 		fprintf(out,"define dso_local i32 ");
  		return 1;
+ 	}
  	else if(s=="main")
+ 	{
+ 		fprintf(out,"@main");
  		return 2;
+ 	}
  	else if(s=="return")
+ 	{
+	 	fprintf(out,"    ret ");
  		return 6;
+ 	}
  	else
  		return 0;
  }
@@ -354,86 +382,63 @@ int UnaryExp()
 	else
 		return 0;
 }
-int TakeWord()
+
+int FuncDef()
 {
-	for(;num<length;)
+	while(letter[num]=="block")
 	{
-  		string str;
-  		string strnew;
-  		str=letter[num];
-  		if((str>="a"&&str<="z"||str>="A"&&str<="Z"||str=="_")&&str!="block")
-		{
-			int x=judgeword(str,num);	
-			if(x==1)
-			{
-				q[++top]=1;//int 
-			}
-			else if(x==2)
-			{
-				q[++top]=2;//main
-			}
-			else if(x==6)
-			{
-				q[++top]=6;//return
-				if(Exp()>0)
-				{
-					q[++top] = 7;
-					while(top2!=-1)
-					{
-						operate(op[top2]);
-						top2--;
-					}
-				}
-				else
-				{
-					printf("这里的问题\n");
-					return -1;
-				}
-			}
-			else
-			{
-				return -1;
-			}
-		}
-		else if(str=="("||str==")"||str=="{"||str=="}"||str==";")
-		{
-			int x=symbol(str);
-			if(x!=0)
-			{
-				q[++top]=x;
-				num++;
-			}
-			else
-			{
-				return -2;
-			}
-		}
-		else if(str>="0" && str<="9")
-		{
-			int ret=Number(str,num);
-			if(ret==-1)
-			{
-				return -1;
-			}
-			else if(result == -1)
-			{
-				q[++top] = 7;
-				result = ret;
-			}
-			else
-			{
-				return -3;//出现多个数字 
-			}
-		} 
-		else if(str=="block")
+		num++;
+	}
+	string s=letter[num];
+	if(judgeword(s,num)==1)
+	{
+		while(letter[num]=="block")
 		{
 			num++;
 		}
-		else
+		if(judgeword(letter[num],num)==2)
 		{
-			printf("这里有错\n");
-			return -4;
-		} 
+			while(letter[num]=="block")
+				num++;
+			if(symbol(letter[num])==3)
+			{
+				while(letter[num]=="block")
+					num++;
+				if(symbol(letter[num])==4)
+				{
+					while(letter[num]=="block")
+						num++;
+					if(symbol(letter[num])==5)
+					{
+						while(letter[num]=="block")
+							num++;
+						if(judgeword(letter[num],num)==6)//return
+						{
+							if(Exp()>0)
+							{
+								while(top2!=-1)
+								{
+									operate(op[top2]);
+									top2--;
+								}
+								fprintf(out,"i32 %d\n",shuzi[0]);
+								while(letter[num]=="block")
+									num++;
+								if(symbol(letter[num])==8)
+								{
+									while(letter[num]=="block")
+										num++;
+									if(symbol(letter[num])==9)
+									{
+										return 1;
+									}
+								}
+							}
+						}
+					}
+				}
+			}	
+		}
 	}
 	return 0;
 }
@@ -494,59 +499,13 @@ int main(int argc,char **argv){
   			}
   		}
 	}
-	int te=TakeWord();
-	if(te!=0)
+	int fd=FuncDef();
+	if(fd>0)
 	{
-		printf("%d\n",te);
-  		return 5;
-  	}
-	if(top!=9)
-	{
-		printf("4\n");
-		return 4;
+		return 0;
 	}
-	for(i=1;i<=top;i++)
+	else
 	{
-		if(q[i]!=i)
-		{
-			printf("3\n");
-			return 3;
-		}
-	} 
-	for(i=1;i<=top;i++)
-	{
-		if(q[i]==1)
-		{
-			fprintf(out,"define dso_local i32 ");
-		}
-		else if(q[i]==2)
-		{
-			fprintf(out,"@main");
-		}
-		else if(q[i]==3)
-		{
-			fprintf(out,"(");
-		}
-		else if(q[i]==4)
-		{
-			fprintf(out,")");
-		}
-		else if(q[i]==5)
-		{
-			fprintf(out,"{\n");
-		}
-		else if(q[i]==6)
-		{
-			fprintf(out,"    ret ");
-		}
-		else if(q[i]==7)
-		{
-			fprintf(out,"i32 %d\n",shuzi[0]);
-		}
-		else if(q[i]==9)
-		{
-			fprintf(out,"}");
-		}
+		return 1;
 	}
-	return 0;
 }
